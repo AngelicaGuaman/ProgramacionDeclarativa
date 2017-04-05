@@ -1,0 +1,154 @@
+Autores: 
+Angélica Guamán Albarracin T110212
+Mónica Zori Martín N060119
+Carlos Prado Ventura R090058 
+Carlos Soriano Soriano Q080037
+
+-----------------------
+-- PREDICADO abrir/4 --
+-----------------------
+
+	- Definición del Predicado abrir/4
+	abrir(Estado_Inicial, Estado_Final, Movimientos_Automaticos, Solucion)
+	Estado_Inicial -> predicado palancas/n origen
+	Estado_Final -> predicado palancas/n final
+	Movimientos_Automaticos -> LISTA formato [X1-[X2,X3,X4...]] o vacia[]
+	Solucion -> LISTA movimientos a seguir
+
+El caso básico de este predicado es cuando en primera instancia el Estado_Inicial
+y Estado_Final son el mismo, en este caso debe devolver la lista Solucion vacía.
+abrir(Estado,Estado,Movimientos_Automaticos,[]):-!.
+
+En el caso que Estado_Inicial y Estado_Final sean distintos, nos hemos ayudado de un predicado
+abrir/5 que va a tener una Lista de Visitados, en ésta se va ir añadiendo todos los estados visitados.
+abrir(Estado_Inicial,Estado_Final,Movimientos_Automaticos,Solucion):-
+	abrir(Estado_Inicial,Estado_Final,Movimientos_Automaticos,[Estado_Inicial],Solucion).
+
+-----------------------
+-- PREDICADO abrir/5 --
+-----------------------
+
+	- Definición del predicado abrir/5
+	abrir(Estado_Inicial,Estado_Final,Movimientos_Automaticos,Visitados,Solucion).
+	Estado_Inicial -> predicado palancas/n origen
+	Estado_Final -> predicado palancas/n final
+	Movimientos_Automaticos -> LISTA formato [X1-[X2,X3,X4...]] o vacía[]
+	Solucion -> LISTA movimientos a seguir
+	Visitados -> LISTA con los estados visitados antes de llegar al Estado_Final, esta lista en primera 
+				instancia tiene el Estado_Inicial, ya que es el primero en "visitar"
+
+				
+------------------------
+--PREDICADOS DE APOYO--
+------------------------
+
+- mover_palanca(X,Y)
+	Este predicado lo que hace es cambiar de estado la palanca.
+	X -> Estado Inicial
+	Y -> Estado cambiado.
+
+	
+/*********************/
+/** Rellena Estado **/
+/*********************/
+
+El predicado 'rellenaEstado' tiene como objetivo rellenar el estado con los cambios de palancas nuevos.
+Los parametros de entrada son:
+EstadoI --> Es el Estado Inicial de palancas a modificar.
+Indice --> Es la palanca que posiblemente se cambie Estado Inicial.
+Posiciones --> Es una Lista con las posiciones de las palancas que queremos modificar a su estado opuesto (on -> off, off->on).
+EstadoF --> Es una estructura nueva donde vamos a instanciar las palancas modificadas y así generar el nuevo estado.
+
+----------------------
+Funcionalidad
+----------------------
+
+Este predicado tiene la siguiente condición de parada:
+rellenaEstado(EstadoI,0,Posiciones,EstadoF).
+Cuando el indice llega a 0, el predicado termina.
+
+1- Comprobamos que el indice sea mayor o igual que 1.
+2- Creamos una variable IndiceN donde decrementamos el indice de entrada para recorrer así la lista de 'Posiciones'.
+3- Buscamos si Indice (posición en la lista de 'Posiciones') está en la lista de 'Posiciones'. Esto lo hacemos con 'member'.
+4- Obtenemos el ElementoI de la estructura 'EstadoI' (Estado Inicial de entrada) de la posición 'Indice'. Esto lo hacemos con el predicado 'arg', 
+   que nos permite sacar un elemento de la posición que queramos de la estructura deseada.
+5- Una vez extraido el ElementoI, que es el que queremos modificar, movemos palanca. 
+	5a- mover_palanca --> Se encarga de poner el opuesto al que estaba. on -> off | off -> on
+6- Una vez hemos cambiado el 'ElementoI' (la palanca de posición 'Indice'), lo introducimos en 'EstadoF', que es una nueva estructura donde vamos 
+   a devolver el nuevo estado con las palancas modificadas.
+7- Llamamos de nuevo a 'rellenaEstado' con el 'EstadoI', el 'IndiceN' (indice decrementado), la lista de 'Posiciones' y el nuevo estado 'EstadoF' 
+   modificando la primera palanca de la lista de 'Posiciones'.
+
+En caso de que el Indice no esté en la lista de 'Posiciones', quiere decir que esa palanca no se modifica, por lo que permanece en el mismo estado.
+Para este caso, el programa entraria por el otro predicado de 'rellenaEstado'.
+Este predicado se encargar de rellenar las palancas que no tienen que ser modificadas, dejandolas igual. Esto lo hace con 'arg'.
+
+Cuando el IndiceN llega a 0, ya hemos recorrido toda la lista de 'Posiciones', por lo tanto salimos por la condición de parada.
+
+- rellenaEstado(EstadoI,Indice,Posiciones,EstadoF):-
+	EstadoI -> Es el estado al que vamos a cambiar las palancas según lo indique posiciones
+	EstadoF -> Es una estructura nueva sin instanciar sus elementos, en este vamos a ir añadiendo
+				las palancas cambiado el estado según indique posiciones.
+	Indice -> es el índice del elemento que vamos a modificar y añadir al EstadoF o simplemente añadir, este indice va ir
+				decrementando.
+	Posiciones -> Es una lista con todas las posiciones de EstadoI que hay que modificar.
+
+	
+/*********************/
+/**** automatico ****/
+/*********************/
+	
+El predicado 'automatico' tiene como objetivo devolver la lista de palancas que son necesarias cambiar para llegar del Estado_Inicial al EstadoFinal.
+Los parametros de entrada son:
+P --> Es la palanca que cambiamos de estado.
+[P-L|Xs] --> Es una lista con elementos(lista de Movimientos_Automaticos) de tipo [P-L],donde L es otra lista. [1-[2,3]] -> Esto quiere decir que al 
+			cambiar la palanca 1, también cambiamos la 2 y 3.
+[P|L]--> Es la Lista de 'Movimientos', donde almacenamos las palancas que hemos cambiado para llegar al Estado_Final.
+
+----------------------
+Funcionalidad
+----------------------
+
+El predicado automatico se encarga de recibir una palanca, y devolver una lista con cada una de las palancas que se han modificado.
+
+1- Si la lista de Movimientos_Automaticos es vacia, devolvemos la lista con las palancas que se han modificado.
+automatico(Palanca,[],[Palanca]).
+
+2- Si P->Palanca, es la primera palanca(P) de la lista de Movimientos_Automaticos, concatenamos esa Palanca con L, que es la lista de palancas que 
+   cambian a su estado opuesto cuando cogemos Palanca y la cambiamos.
+3- Si P->Palanca no es la primera palanca (P) de la lista de Movimientos_Automaticos, buscamos en el resto de la lista de Movimientos_Automaticos.
+4- A continuacion, llamamos de nuevo a 'automatico' con la Palanca en cuestión, el resto de la lista y una Lista donde devolvemos todos los movimientos 
+   de palancas necesarios.	
+
+	
+/*********************/
+/****** desarma ******/
+/*********************/	
+
+Este predicado lo utilizamos para ir cogiendo una palanca de la lista que le pasamos en uno de sus argumentos, cada vez que llamamos a este predicado 
+se genera una nueva palanca, y se va quitando esa palanca de la nueva lista.
+
+desarma(X,[X|Xs],Xs).
+desarma(X,[Y|Ys],[Y|Zs]):-desarma(X,Ys,Zs).
+
+Argumentos que se le pasa:
+
+X -> palanca extraída de la lista [X|Xs]
+[X|Xs] -> Lista a la que le vamos a extraer X
+Xs -> Lista modificada que es [X|Xs] - X 
+
+/*********************/
+/*** generarLista ****/
+/*********************/
+
+Este predicado lo utilizamos para generar una lista con el numero de palancas,
+Generamos los números del 1 hasta la aridad que se le para como parámetro.
+Y esta lista se la pasamos como argumento a desarma para que nos devuelva la primera y posible palanca
+que hay que cambiar de estado para llegar al Estado_Final.
+
+Argumentos que se le pasa:
+
+Aridad -> es el tope de palancas que hay en la estructura
+[Aridad|Lista] -> Lista que vamos a devolver, lista del 1 hasta Aridad
+
+ 

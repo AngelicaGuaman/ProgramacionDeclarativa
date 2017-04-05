@@ -1,0 +1,210 @@
+Nombre:Angélica Guamán Albarracín
+Nº matrícula: t110212
+
+					MEMORIA
+
+Para poder comprobar que nuestro programa lógico funciona, he creado una base de hechos respecto 
+a los oficiales y a las aficiones.
+
+	-oficiales
+		oficiales(PROFESIONAL,OFICIO).
+	-afición
+		aficiones(PROFESIONAL,AFICION).
+
+Ejemplos de la base de hechos:
+
+	%OFICIALES DE ELECTRICIDAD
+	oficiales(juan, electricidad).
+	oficiales(jorge, electricidad).
+
+	%OFICIALES DE ALBANILERIA
+	oficiales(pablo, albanileria).
+	oficiales(cristian, albanileria).
+
+	%OFICIALES DE FONTANERIA
+	oficiales(david, fontaneria).
+	oficiales(ruben, fontaneria).
+
+	%OFICIALES DE COORDINACION
+	oficiales(juan, coordinacion).
+	oficiales(pablo, coordinacion).
+	
+	%AFICIONES
+	aficion(juan, yoga).
+	aficion(ruben, futbol).
+	aficion(carlos, toros).
+
+Creación de los predicados de nuestro programa, así como los predicados auxiliares para cumplimertar la práctica.
+
+% Genera todas las permutaciones de una lista
+permutacion([],[]):-!. 
+permutacion(Xs,[Z|Zs]):- %permutacion(lista_donde_guardo_datos_permutados, lista_a_permutar)
+	desarma(Z,Xs,Ys),
+	permutacion(Ys,Zs). 
+
+Dato: variable donde guardo el dato que saco de Lista1
+Lista1: lista donde tengo todos mis elementos.
+Lista2: lista donde tengo todos los elementos menos el Dato
+
+desarma(X,[X|Xs],Xs). %desarma(Dato, Lista1,Lista2)
+desarma(X,[Y|Ys],[Y|Zs]):-
+	desarma(X,Ys,Zs). 
+
+parte_de(_X,[_X|_Y]). %parte_de(dato_a_buscar, lista_de_donde_se_busca).
+parte_de(X,[_C|Y]):-
+	parte_de(X,Y). 
+
+-GRUPO DE OFICIALES
+grupo_de_oficiales(L):- %paridad 1
+	grupo_de_oficiales(L,_). %paridad 2
+
+A éste se le pasa dos parámetros: 
+	-el primero indica el grupo de oficiales (el tamaño de esta lista es obligatoriamente tres)
+	-el segundo indica el par de oficial:oficio
+
+Como sabemos que el grupo de oficiales de tamaño tres uno de los oficiales 
+debe de tener como oficio coordinación y otro oficio. 
+Para que sea un grupo los oficiales no pueden hacer el mismo oficio.
+
+grupo_de_oficiales([X,Y,Z],[X:coordinacion,X:A,Y:B,Z:C]):-
+	oficiales(X,coordinacion),
+	oficiales(X,A),
+	oficiales(Y,B),
+	Y\=X,%comprobamos que no unifiquen las personas
+	oficiales(Z,C),
+	Z\=Y, Z\=X,
+	permutacion([A,B,C],[fontaneria,electricidad,albanileria]).%nos devuelve todas las combianciones posibles de oficios
+
+
+--GRUPOS DE 4 OFICIALES
+Este predicado se parece mucho al predicado anterior, con la diferencia que se le pasa una lista de
+oficiales de tamaño cuatro, para cada oficial hay un oficio distinto y personas distintas
+grupo_de_oficiales([X,Y,Z,T],[X:A,Y:B,Z:C,T:D]):-
+	oficiales(X,A),
+	oficiales(Y,B),
+	Y\=X,
+	oficiales(Z,C),
+	Z\=Y, Z\=X,
+	oficiales(T,D),
+	T\=X, T\=Y, T\=Z,
+	permutacion([A,B,C,D],[coordinacion,fontaneria,electricidad,albanileria]).
+	
+--BUEN AMBIENTE
+
+buen_ambiente(L):-
+	buen_ambiente(L,_).
+
+--BUEN AMBIENTE CON UN ARGUMENTO
+
+--Lista de oficiales de tamaño tres
+
+Para que exista buen ambiente debe de ser un grupo de oficiales o que la aficion mayoritaria sea yoga
+o que todo el grupo tenga la misma aficion, para hacer todas estas comprobaciones nos ayudamos en los
+predicados ya definidos en el programa y de la base de hechos.
+
+buen_ambiente([X,Y,Z]):-
+	aficion_mayoritaria([X,Y,Z],yoga);
+	aficion(X,A), aficion(Y,A),aficion(Z,A),
+	grupo_de_oficiales([X,Y,Z]).
+	
+--Lista de oficiales de tamaño cuatro
+
+Es lo mismo que predicado anterior pero se le pasa una lista de oficiales de tamaño cuatro.
+
+buen_ambiente([X,Y,Z,T]):-
+	aficion_mayoritaria([X,Y,Z,T],yoga);
+	aficion(X,A), aficion(Y,A),aficion(Z,A), aficion(T,A), grupo_de_oficiales([X,Y,Z,T]).
+
+--BUEN AMBIENTE CON DOS ARGUMENTOS
+
+--Lista de oficiales de tamaño tres
+	--Primer argumento nos devuelve la lista de tamaño tres con los posibles grupos de oficiales donde hay
+	buen ambiente
+	--Segundo argumento nos pasan una lista de cualquier tamaño con los oficiales libres, con los que podemos
+	formar un grupo de oficiales
+
+	Nos ayudamos de nuestro predicado buen_ambiente(L), al que le pasamos un solo argumento, ya que es lo mismo,
+	una vez que hayamos conseguido hacer el grupo_de_oficiales
+
+	buen_ambiente([X,Y,Z], L):-
+	      desarma(X,L,L1),
+	      desarma(Y,L1,L2),
+	      desarma(Z,L2,L3), 
+	      buen_ambiente([X,Y,Z]).<-- aqui va el codigo de buen ambiene de un parametro
+
+--Lista de oficiales de tamaño cuatro
+
+	Los mismo con el predicado anterior pero con la diferencia que devuelve una lista de tamaño cuatro que es
+	el posible grupo de oficiales con buen ambiente.
+	
+	buen_ambiente([X,Y,Z,T], L):-
+	     desarma(X,L,L1),
+	     desarma(Y,L1,L2),
+	     desarma(Z,L2,L3),
+	     desarma(T,L3,L4),
+	     buen_ambiente([X,Y,Z,T])..<-- aqui va el codigo de buen ambiene de un parametro
+
+
+-- AFICION MAYORITARIA LISTA DE OFICIALES TAMAÑO TRES
+Se le pasa una lista de oficiales y una afición, sabemos que para que sea una afición mayoritaria por lo menos 
+dos oficiales tienen que tener la misma afición o tres.
+Para saber las aficiones de los oficiales accedemos a la base de hechos, pero así mismo hay que comprobar que no 
+unifiquen y que sea un grupo de oficiales bien definido según el enunciado. 
+
+aficion_mayoritaria([X,Y,Z], A):-
+	aficion(X,A), aficion(Y,A), Y\=X, X\=Z, Y\=Z;
+	aficion(X,A), aficion(Z,A), Z\=X, X\=Y, Z\=Y;
+	aficion(Y,A), aficion(Z,A),
+	grupo_de_oficiales([X,Y,Z]).
+
+--AFICION MAYORITARIA LISTA DE OFICIALES TAMAÑO CUATRO
+
+Lo mismo que el predicado anterior, pero en este caso para que sea una aficion mayoritaria al menos
+tres oficiales tienen que tener la misma afición, no importa el orden en que se encuentre, también
+hago las respectivas comprobaciones de no unificación para los oficiales.
+
+aficion_mayoritaria([X,Y,Z,T], A):-
+	aficion(X,A), aficion(Y,A), aficion(Z,A), Y\=X, Z\=Y, Z\=X, T\=X, T\=Y, T\=Z;
+	aficion(X,A), aficion(Y,A), aficion(T,A), Y\=X, T\=Y, T\=X, Z\=X, Z\=Y, Z\=T;
+	aficion(X,A), aficion(Z,A), aficion(T,A),
+	grupo_de_oficiales([X,Y,Z,T]).
+
+-- GRUPO DE EXCELENCIA
+En este caso no he visto necesario que se cree una base de hechos ya que son dos oficiales 
+que cumplen estos requisitos.
+
+grupo_de_excelencia(L):-
+	grupo_de_excelencia(L_).
+	
+--GRUPO DE EXCELENCIA CON UN ARGUMENTO
+%para ser un grupo de excelencia, en un grupo de oficiales debe de aparecer justo o juan
+grupo_de_excelencia(L):-
+	grupo_de_oficiales(L),
+	parte_de(juan,L); %comprobamos que en la lista que nos pasan exista juan
+	parte_de(justo,L).
+
+
+--GRUPO DE EXCELENCIA CON DOS ARGUMENTOS
+--Lista que devuelve grupos de oficiales de tamaño tres
+	--Primer argumento es la lista que nos devuelve con los posibles grupos de tamaño tres a formarse
+	--Segundo argumento es una lista de cualquier tamaño que contiene a los oficiales disponibles 
+	para crear un grupo_de_excelencia
+
+	Hacemos uso de nuestro predicado grupo_de_excelencia(L), ya que es lo mismo una vez elegido un grupo
+	de oficiales.
+
+	grupo_de_excelencia([X,Y,Z],L):-
+	      desarma(X,L,L1),
+	      desarma(Y,L1,L2),
+	      desarma(Z,L2,L3),
+	      grupo_de_excelencia([X,Y,Z]).<-- aquí va el codigo de grupo de excelencia de un parametro
+
+--Lista que devuelve grupos de oficiales de tamaño cuatro
+	Lo mismo que el predicado anterior, con la diferencia que devuelve una lista de tamaño cuatro.
+
+	grupo_de_excelencia([X,Y,Z,T],L):-
+		desarma(X,L,L1),
+		desarma(Y,L1,L2),
+		desarma(Z,L2,L3),
+		desarma(T,L3,L4),
+		grupo_de_excelencia([X,Y,Z,T]).<-- aquí va el codigo de grupo de excelencia de un parametro
